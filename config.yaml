@@ -1,0 +1,63 @@
+# Flight Price Monitor Configuration
+# ====================================
+# Edit this file to set up your flight watches.
+# Each watch is an independent search with its own criteria.
+
+# Email notification settings
+email:
+  recipient: "tickhuat@gmail.com"
+
+# Default display currency (can be overridden per watch)
+currency:
+  display: "TWD"
+
+# Data providers (at least one must be enabled)
+providers:
+  # Google Flights scraper — free, no API key needed
+  - name: google_flights
+    enabled: true
+
+  # Travelpayouts — free, needs API token (cached price data, updated every 48h)
+  - name: travelpayouts
+    enabled: false   # Enable after getting token from travelpayouts.com
+
+# Flight watches - add as many as you need
+watches:
+  # ---- Example 1: Malaysia -> Taiwan Business Class ----
+  - name: "MY-TW May-Jun"
+    enabled: true
+    origins:
+      - "KUL"   # Kuala Lumpur International (KLIA/KLIA2)
+    destinations:
+      - "TPE"   # Taoyuan International
+      - "TSA"   # Taipei Songshan
+    trip_type: "one_way"          # "one_way" or "round_trip"
+    departure_date_from: "2026-05-15"
+    departure_date_to: "2026-06-15"
+    cabin_class: "economy"          # economy / premium_economy / business / first
+    max_stopovers: 0                 # 0 = direct flights only
+    adults: 1
+    max_price: 5000                  # in this watch's currency
+    currency: "TWD"                  # override global currency
+    max_results: 20
+
+  # ---- Example 2: Taiwan -> Japan Economy Summer ----
+  - name: "TW-JP Summer"
+    enabled: true                    # Set to true to activate
+    origins:
+      - "TPE"
+      - "TSA"
+    destinations:
+      - "NRT"   # Tokyo Narita
+      - "HND"   # Tokyo Haneda
+    trip_type: "round_trip"
+    departure_date_from: "2026-07-8"
+    departure_date_to: "2026-07-9"
+    stay_nights_min: 6
+    stay_nights_max: 9
+    cabin_class: "economy"
+    max_stopovers: 0
+    adults: 1
+    max_price: 15000
+    currency: "TWD"
+    max_results: 20
