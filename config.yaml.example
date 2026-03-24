@@ -1,11 +1,12 @@
 # Flight Price Monitor Configuration
 # ====================================
-# Edit this file to set up your flight watches.
+# Copy this file to config.yaml and edit to set up your flight watches.
+#   cp config.yaml.example config.yaml
 # Each watch is an independent search with its own criteria.
 
 # Email notification settings
 email:
-  recipient: "tickhuat@gmail.com"
+  recipient: "your.email@example.com"
 
 # Default display currency (can be overridden per watch)
 currency:
@@ -23,7 +24,7 @@ providers:
 
 # Flight watches - add as many as you need
 watches:
-  # ---- Example 1: Malaysia -> Taiwan one-way ----
+  # ---- Example 1: One-way flight ----
   - name: "MY-TW May-Jun"
     enabled: true
     origins:
@@ -41,9 +42,9 @@ watches:
     currency: "TWD"               # override global currency
     max_results: 20
 
-  # ---- Example 2: Taiwan -> Japan round-trip Summer ----
+  # ---- Example 2: Round-trip with multiple cabin classes ----
   - name: "TW-JP Summer"
-    enabled: true
+    enabled: false
     origins:
       - "TPE"
       - "TSA"
@@ -54,8 +55,10 @@ watches:
     departure_date_from: "2026-07-08"
     departure_date_to: "2026-07-09"
     return_date_from: "2026-07-13"   # return date range (round_trip only)
-    return_date_to: "2026-07-14"
-    cabin_class: "economy"           # or list: ["economy", "business"]
+    return_date_to: "2026-07-18"
+    cabin_class:                     # search multiple cabin classes at once
+      - "economy"
+      - "business"
     max_stopovers: 0
     adults: 1
     max_price: 15000
