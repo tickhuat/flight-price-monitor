@@ -105,19 +105,32 @@ def _parse_single_watch(raw: dict, global_currency: str) -> WatchConfig:
     if dep_to < dep_from:
         raise ValueError("departure_date_to must be >= departure_date_from")
 
-    # Stay nights (required for round_trip)
-    stay_min = raw.get("stay_nights_min")
-    stay_max = raw.get("stay_nights_max")
+    # Return dates (required for round_trip)
+    ret_from = None
+    ret_to = None
     if trip_type == "round_trip":
-        if stay_min is None or stay_max is None:
-            raise ValueError("stay_nights_min and stay_nights_max are required for round_trip")
-        if stay_max < stay_min:
-            raise ValueError("stay_nights_max must be >= stay_nights_min")
+        ret_from_raw = raw.get("return_date_from", "")
+        ret_to_raw = raw.get("return_date_to", "")
+        if not ret_from_raw or not ret_to_raw:
+            raise ValueError("return_date_from and return_date_to are required for round_trip")
+        ret_from = _parse_date(ret_from_raw, "return_date_from")
+        ret_to = _parse_date(ret_to_raw, "return_date_to")
+        if ret_to < ret_from:
+            raise ValueError("return_date_to must be >= return_date_from")
+        if ret_from < dep_from:
+            raise ValueError("return_date_from must be >= departure_date_from")
 
-    # Cabin class
-    cabin_class = raw.get("cabin_class", "economy")
-    if cabin_class not in VALID_CABIN_CLASSES:
-        raise ValueError(f"Invalid cabin_class '{cabin_class}', must be one of {VALID_CABIN_CLASSES}")
+    # Cabin classes (string or list)
+    cabin_raw = raw.get("cabin_class", "economy")
+    if isinstance(cabin_raw, str):
+        cabin_classes = [cabin_raw]
+    elif isinstance(cabin_raw, list):
+        cabin_classes = cabin_raw
+    else:
+        raise ValueError("cabin_class must be a string or list of strings")
+    for cc in cabin_classes:
+        if cc not in VALID_CABIN_CLASSES:
+            raise ValueError(f"Invalid cabin_class '{cc}', must be one of {VALID_CABIN_CLASSES}")
 
     # Other fields
     max_stopovers = raw.get("max_stopovers", 0)
@@ -137,9 +150,9 @@ def _parse_single_watch(raw: dict, global_currency: str) -> WatchConfig:
         trip_type=trip_type,
         departure_date_from=dep_from,
         departure_date_to=dep_to,
-        stay_nights_min=stay_min,
-        stay_nights_max=stay_max,
-        cabin_class=cabin_class,
+        return_date_from=ret_from,
+        return_date_to=ret_to,
+        cabin_classes=cabin_classes,
         max_stopovers=max_stopovers,
         adults=adults,
         max_price=float(max_price),

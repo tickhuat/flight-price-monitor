@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 import requests
@@ -40,8 +40,8 @@ class TravelpayoutsProvider(FlightProvider):
         destination: str,
         departure_from: date,
         departure_to: date,
-        return_nights_min: Optional[int],
-        return_nights_max: Optional[int],
+        return_date_from: Optional[date],
+        return_date_to: Optional[date],
         trip_type: str,
         cabin_class: str,
         max_stopovers: int,
@@ -64,29 +64,29 @@ class TravelpayoutsProvider(FlightProvider):
                 if max_stopovers == 0:
                     offers = self._search_direct(
                         origin, destination, month, trip_type,
-                        return_nights_min, return_nights_max, currency,
+                        return_date_from, return_date_to, currency,
                     )
                 else:
                     offers = self._search_calendar(
                         origin, destination, month, trip_type,
-                        return_nights_min, return_nights_max, cabin_class, currency,
+                        return_date_from, return_date_to, cabin_class, currency,
                     )
                 all_offers.extend(offers)
             except Exception as e:
                 logger.warning(f"Travelpayouts search failed for {month}: {e}")
 
-        # Filter by date range
+        # Filter by departure date range
         all_offers = [
             o for o in all_offers
             if o.departure_date and departure_from <= o.departure_date <= departure_to
         ]
 
-        # Filter by stay duration for round-trip
-        if trip_type == "round_trip" and return_nights_min is not None:
+        # Filter by return date range for round-trip
+        if trip_type == "round_trip" and return_date_from is not None:
             all_offers = [
                 o for o in all_offers
                 if o.return_date
-                and return_nights_min <= (o.return_date - o.departure_date).days <= return_nights_max
+                and return_date_from <= o.return_date <= return_date_to
             ]
 
         all_offers.sort(key=lambda o: o.price_original)
@@ -99,8 +99,8 @@ class TravelpayoutsProvider(FlightProvider):
         destination: str,
         month: str,
         trip_type: str,
-        return_nights_min: int | None,
-        return_nights_max: int | None,
+        return_date_from: date | None,
+        return_date_to: date | None,
         cabin_class: str,
         currency: str,
     ) -> list[FlightOffer]:
@@ -115,12 +115,11 @@ class TravelpayoutsProvider(FlightProvider):
             "token": self.api_token,
         }
 
-        if trip_type == "round_trip" and return_nights_min is not None:
-            # Use middle of stay range for return month estimate
-            mid_stay = (return_nights_min + return_nights_max) // 2
-            dep_month_date = datetime.strptime(month, "%Y-%m").date()
-            ret_month = (dep_month_date.replace(day=1) + _timedelta_months(1)).strftime("%Y-%m")
-            params["return_date"] = ret_month
+        if trip_type == "round_trip" and return_date_from is not None:
+            # Use the return date range's middle month
+            mid_days = (return_date_to - return_date_from).days // 2
+            ret_mid = return_date_from + timedelta(days=mid_days)
+            params["return_date"] = ret_mid.strftime("%Y-%m")
 
         resp = requests.get(CALENDAR_URL, params=params, timeout=15)
         resp.raise_for_status()
@@ -144,8 +143,8 @@ class TravelpayoutsProvider(FlightProvider):
         destination: str,
         month: str,
         trip_type: str,
-        return_nights_min: int | None,
-        return_nights_max: int | None,
+        return_date_from: date | None,
+        return_date_to: date | None,
         currency: str,
     ) -> list[FlightOffer]:
         """Use direct endpoint for non-stop flights only."""
@@ -157,10 +156,10 @@ class TravelpayoutsProvider(FlightProvider):
             "token": self.api_token,
         }
 
-        if trip_type == "round_trip" and return_nights_min is not None:
-            dep_month_date = datetime.strptime(month, "%Y-%m").date()
-            ret_month = (dep_month_date.replace(day=1) + _timedelta_months(1)).strftime("%Y-%m")
-            params["return_date"] = ret_month
+        if trip_type == "round_trip" and return_date_from is not None:
+            mid_days = (return_date_to - return_date_from).days // 2
+            ret_mid = return_date_from + timedelta(days=mid_days)
+            params["return_date"] = ret_mid.strftime("%Y-%m")
 
         resp = requests.get(DIRECT_URL, params=params, timeout=15)
         resp.raise_for_status()

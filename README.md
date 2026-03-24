@@ -5,9 +5,9 @@
 ## 功能
 
 - 支援多條航線同時監控（每條航線獨立設定）
-- 彈性日期範圍搜尋（出發日期區間 + 停留天數區間）
+- 彈性日期範圍搜尋（出發日期區間 + 回程日期區間）
 - 支援單程 / 來回
-- 支援經濟艙 / 豪華經濟艙 / 商務艙 / 頭等艙
+- 支援同時搜尋多種艙等（經濟艙 / 豪華經濟艙 / 商務艙 / 頭等艙）
 - 可設定是否允許轉機
 - 價格門檻過濾，低於目標價自動通知
 - 每條航線可設定不同的顯示貨幣
@@ -182,12 +182,15 @@ watches:
     departure_date_from: "2026-05-15"   # 出發日期範圍起始
     departure_date_to: "2026-06-07"     # 出發日期範圍結束
 
-    # === 停留天數（僅 round_trip 需要）===
-    stay_nights_min: 4             # 最少停留幾晚
-    stay_nights_max: 7             # 最多停留幾晚
+    # === 回程日期（僅 round_trip 需要）===
+    return_date_from: "2026-05-20"      # 回程日期範圍起始
+    return_date_to: "2026-06-14"        # 回程日期範圍結束
 
-    # === 艙等 ===
-    cabin_class: "business"        # 見下方艙等對照表
+    # === 艙等（可填單個或多個）===
+    cabin_class: "business"             # 單個艙等
+    # cabin_class:                      # 或同時搜尋多種艙等
+    #   - "economy"
+    #   - "business"
 
     # === 轉機 ===
     max_stopovers: 0               # 0=直飛, 1=允許1次轉機, 2=允許2次...
@@ -244,7 +247,7 @@ watches:
 
 ### 範例 1：馬來西亞 → 台灣商務艙來回
 
-5 月中到 6 月初出發，待 5-7 天，直飛，商務艙。
+5 月中到 6 月初出發，回程 5 月底到 6 月中，直飛，同時搜尋經濟艙和商務艙。
 
 ```yaml
 - name: "MY-TW Business"
@@ -254,9 +257,11 @@ watches:
   trip_type: "round_trip"
   departure_date_from: "2026-05-15"
   departure_date_to: "2026-06-07"
-  stay_nights_min: 4
-  stay_nights_max: 7
-  cabin_class: "business"
+  return_date_from: "2026-05-20"
+  return_date_to: "2026-06-14"
+  cabin_class:
+    - "economy"
+    - "business"
   max_stopovers: 0
   adults: 1
   max_price: 5000
@@ -266,7 +271,7 @@ watches:
 
 ### 範例 2：台灣 → 日本經濟艙暑假
 
-7 月出發，2 人同行，待一週左右。
+7 月出發，2 人同行，回程 7 月中到 7 月底。
 
 ```yaml
 - name: "TW-JP Economy Summer"
@@ -276,8 +281,8 @@ watches:
   trip_type: "round_trip"
   departure_date_from: "2026-07-01"
   departure_date_to: "2026-07-31"
-  stay_nights_min: 5
-  stay_nights_max: 9
+  return_date_from: "2026-07-06"
+  return_date_to: "2026-08-09"
   cabin_class: "economy"
   max_stopovers: 0
   adults: 2

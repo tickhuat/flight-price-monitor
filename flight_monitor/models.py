@@ -51,10 +51,10 @@ class WatchConfig:
     departure_date_from: date
     departure_date_to: date
 
-    stay_nights_min: Optional[int]  # round_trip only
-    stay_nights_max: Optional[int]
+    return_date_from: Optional[date]  # round_trip only
+    return_date_to: Optional[date]
 
-    cabin_class: str  # economy / premium_economy / business / first
+    cabin_classes: list[str]  # e.g. ["economy", "business"]
     max_stopovers: int
     adults: int
 

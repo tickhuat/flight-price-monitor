@@ -23,7 +23,7 @@ providers:
 
 # Flight watches - add as many as you need
 watches:
-  # ---- Example 1: Malaysia -> Taiwan Business Class ----
+  # ---- Example 1: Malaysia -> Taiwan one-way ----
   - name: "MY-TW May-Jun"
     enabled: true
     origins:
@@ -34,16 +34,16 @@ watches:
     trip_type: "one_way"          # "one_way" or "round_trip"
     departure_date_from: "2026-05-15"
     departure_date_to: "2026-06-15"
-    cabin_class: "economy"          # economy / premium_economy / business / first
-    max_stopovers: 0                 # 0 = direct flights only
+    cabin_class: "economy"        # string or list: ["economy", "business"]
+    max_stopovers: 0              # 0 = direct flights only
     adults: 1
-    max_price: 5000                  # in this watch's currency
-    currency: "TWD"                  # override global currency
+    max_price: 5000               # in this watch's currency
+    currency: "TWD"               # override global currency
     max_results: 20
 
-  # ---- Example 2: Taiwan -> Japan Economy Summer ----
+  # ---- Example 2: Taiwan -> Japan round-trip Summer ----
   - name: "TW-JP Summer"
-    enabled: true                    # Set to true to activate
+    enabled: true
     origins:
       - "TPE"
       - "TSA"
@@ -51,11 +51,11 @@ watches:
       - "NRT"   # Tokyo Narita
       - "HND"   # Tokyo Haneda
     trip_type: "round_trip"
-    departure_date_from: "2026-07-8"
-    departure_date_to: "2026-07-9"
-    stay_nights_min: 6
-    stay_nights_max: 9
-    cabin_class: "economy"
+    departure_date_from: "2026-07-08"
+    departure_date_to: "2026-07-09"
+    return_date_from: "2026-07-13"   # return date range (round_trip only)
+    return_date_to: "2026-07-14"
+    cabin_class: "economy"           # or list: ["economy", "business"]
     max_stopovers: 0
     adults: 1
     max_price: 15000

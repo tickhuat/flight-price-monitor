@@ -38,8 +38,8 @@ class GoogleFlightsProvider(FlightProvider):
         destination: str,
         departure_from: date,
         departure_to: date,
-        return_nights_min: Optional[int],
-        return_nights_max: Optional[int],
+        return_date_from: Optional[date],
+        return_date_to: Optional[date],
         trip_type: str,
         cabin_class: str,
         max_stopovers: int,
@@ -49,7 +49,7 @@ class GoogleFlightsProvider(FlightProvider):
     ) -> list[FlightOffer]:
         """
         Search Google Flights by iterating over departure dates.
-        For round-trip, pairs each departure date with middle stay duration.
+        For round-trip, pairs each departure date with a representative return date.
         """
         seat = SEAT_MAP.get(cabin_class, "economy")
         passengers = Passengers(adults=adults)
@@ -61,10 +61,13 @@ class GoogleFlightsProvider(FlightProvider):
         seen = set()
 
         for dep_date in dep_dates:
-            if trip_type == "round_trip" and return_nights_min is not None:
-                # Search with a representative return date (middle of stay range)
-                mid_stay = (return_nights_min + return_nights_max) // 2
-                ret_date = dep_date + timedelta(days=mid_stay)
+            if trip_type == "round_trip" and return_date_from is not None:
+                # Pick a representative return date (middle of return range)
+                mid_days = (return_date_to - return_date_from).days // 2
+                ret_date = return_date_from + timedelta(days=mid_days)
+                # Ensure return is after departure
+                if ret_date <= dep_date:
+                    ret_date = dep_date + timedelta(days=1)
                 flight_data = [
                     FlightData(
                         date=dep_date.strftime("%Y-%m-%d"),

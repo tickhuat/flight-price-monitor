@@ -156,15 +156,16 @@ class FlightMonitorEngine:
         for provider in self.providers:
             for origin in watch.origins:
                 for destination in watch.destinations:
-                    try:
-                        offers = self._search_with_retry(
-                            provider, origin, destination, watch
-                        )
-                        all_offers.extend(offers)
-                    except Exception as e:
-                        msg = f"{provider.provider_name()} {origin}->{destination}: {e}"
-                        logger.warning(msg)
-                        errors.append(msg)
+                    for cabin_class in watch.cabin_classes:
+                        try:
+                            offers = self._search_with_retry(
+                                provider, origin, destination, watch, cabin_class
+                            )
+                            all_offers.extend(offers)
+                        except Exception as e:
+                            msg = f"{provider.provider_name()} {origin}->{destination} {cabin_class}: {e}"
+                            logger.warning(msg)
+                            errors.append(msg)
 
         # Currency conversion for offers not in display currency
         for offer in all_offers:
@@ -208,16 +209,17 @@ class FlightMonitorEngine:
         origin: str,
         destination: str,
         watch: WatchConfig,
+        cabin_class: str,
     ) -> list[FlightOffer]:
         return provider.search(
             origin=origin,
             destination=destination,
             departure_from=watch.departure_date_from,
             departure_to=watch.departure_date_to,
-            return_nights_min=watch.stay_nights_min,
-            return_nights_max=watch.stay_nights_max,
+            return_date_from=watch.return_date_from,
+            return_date_to=watch.return_date_to,
             trip_type=watch.trip_type,
-            cabin_class=watch.cabin_class,
+            cabin_class=cabin_class,
             max_stopovers=watch.max_stopovers,
             adults=watch.adults,
             currency=watch.currency,
