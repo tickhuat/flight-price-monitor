@@ -5,6 +5,8 @@ __pycache__/
 venv/
 .venv/
 logs/*.log
+instance/
+*.db
 *.egg-info/
 dist/
 build/

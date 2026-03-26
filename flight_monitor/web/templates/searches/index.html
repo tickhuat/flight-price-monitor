@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Search History — Flight Monitor{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4">Search History</h1>
+
+{% if runs %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Watch</th>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Duration</th>
+          <th>Offers</th>
+          <th>Deals</th>
+          <th>Triggered By</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+        <tr>
+          <td class="fw-semibold">{{ run.watch.name if run.watch else '—' }}</td>
+          <td>
+            {% if run.status == 'completed' %}
+              <span class="badge badge-completed">completed</span>
+            {% elif run.status == 'failed' %}
+              <span class="badge badge-failed">failed</span>
+            {% elif run.status == 'running' %}
+              <span class="badge badge-running">running</span>
+            {% else %}
+              <span class="badge badge-pending">{{ run.status }}</span>
+            {% endif %}
+          </td>
+          <td class="text-muted small">{{ run.started_at.strftime('%Y-%m-%d %H:%M') if run.started_at else '—' }}</td>
+          <td class="text-muted small">
+            {% if run.started_at and run.completed_at %}
+              {% set secs = (run.completed_at - run.started_at).seconds %}
+              {{ secs // 60 }}m {{ secs % 60 }}s
+            {% else %}—{% endif %}
+          </td>
+          <td>{{ run.offers_found or 0 }}</td>
+          <td>
+            {% if run.offers_matched %}
+              <span class="fw-semibold text-success">{{ run.offers_matched }}</span>
+            {% else %}0{% endif %}
+          </td>
+          <td>
+            {% if run.triggered_by == 'manual' %}
+              <span class="badge badge-manual">manual</span>
+            {% else %}
+              <span class="badge badge-schedule">schedule</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('searches.detail', run_id=run.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-5 text-muted">
+    <p>No searches yet. Go to a watch and click <strong>Search</strong> to run your first search.</p>
+    <a href="{{ url_for('watches.index') }}" class="btn btn-outline-primary">Go to Watches</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

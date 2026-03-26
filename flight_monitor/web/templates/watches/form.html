@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit: ' + watch.name if watch else 'New Watch' }} — Flight Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+  <a href="{{ url_for('watches.index') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+  <h1 class="h3 mb-0">{{ 'Edit: ' + watch.name if watch else 'New Watch' }}</h1>
+</div>
+
+<form method="POST">
+  {{ form.hidden_tag() }}
+
+  <!-- Basic Info -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Basic Info</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">{{ form.name.label }}</label>
+          {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+          {% for e in form.name.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <div class="form-check mb-2">
+            {{ form.enabled(class="form-check-input") }}
+            <label class="form-check-label" for="{{ form.enabled.id }}">{{ form.enabled.label.text }}</label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Routes -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Routes</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ form.origins.label }}</label>
+          <input type="hidden" id="origins" name="origins" value="{{ form.origins.data or '' }}">
+          <select id="origins_ts" multiple placeholder="搜尋機場代碼或城市..."></select>
+          {% for e in form.origins.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          <div class="form-text">{{ form.origins.description }}</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">{{ form.destinations.label }}</label>
+          <input type="hidden" id="destinations" name="destinations" value="{{ form.destinations.data or '' }}">
+          <select id="destinations_ts" multiple placeholder="搜尋機場代碼或城市..."></select>
+          {% for e in form.destinations.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          <div class="form-text">{{ form.destinations.description }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trip Details -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Trip Details</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">{{ form.trip_type.label }}</label>
+          {{ form.trip_type(class="form-select" + (" is-invalid" if form.trip_type.errors else ""), id="trip_type") }}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.departure_date_from.label }}</label>
+          {{ form.departure_date_from(class="form-control" + (" is-invalid" if form.departure_date_from.errors else "")) }}
+          {% for e in form.departure_date_from.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.departure_date_to.label }}</label>
+          {{ form.departure_date_to(class="form-control" + (" is-invalid" if form.departure_date_to.errors else "")) }}
+          {% for e in form.departure_date_to.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div id="return-dates" class="col-12">
+          <div class="row g-3">
+            <div class="col-md-4 offset-md-4">
+              <label class="form-label">{{ form.return_date_from.label }}</label>
+              {{ form.return_date_from(class="form-control" + (" is-invalid" if form.return_date_from.errors else "")) }}
+              {% for e in form.return_date_from.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{{ form.return_date_to.label }}</label>
+              {{ form.return_date_to(class="form-control" + (" is-invalid" if form.return_date_to.errors else "")) }}
+              {% for e in form.return_date_to.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preferences -->
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Preferences</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ form.cabin_classes.label }}</label>
+          <div class="{% if form.cabin_classes.errors %}is-invalid{% endif %}">
+            {% for subfield in form.cabin_classes %}
+            <div class="form-check form-check-inline">
+              {{ subfield(class="form-check-input") }}
+              <label class="form-check-label" for="{{ subfield.id }}">{{ subfield.label.text }}</label>
+            </div>
+            {% endfor %}
+          </div>
+          {% for e in form.cabin_classes.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ form.max_stopovers.label }}</label>
+          {{ form.max_stopovers(class="form-control" + (" is-invalid" if form.max_stopovers.errors else "")) }}
+          {% for e in form.max_stopovers.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ form.adults.label }}</label>
+          {{ form.adults(class="form-control" + (" is-invalid" if form.adults.errors else "")) }}
+          {% for e in form.adults.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Price -->
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Price &amp; Results</div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">{{ form.max_price.label }}</label>
+          {{ form.max_price(class="form-control" + (" is-invalid" if form.max_price.errors else "")) }}
+          {% for e in form.max_price.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.currency.label }}</label>
+          {{ form.currency(class="form-control" + (" is-invalid" if form.currency.errors else "")) }}
+          {% for e in form.currency.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ form.max_results.label }}</label>
+          {{ form.max_results(class="form-control" + (" is-invalid" if form.max_results.errors else "")) }}
+          {% for e in form.max_results.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">{{ 'Save Changes' if watch else 'Create Watch' }}</button>
+    <a href="{{ url_for('watches.index') }}" class="btn btn-outline-secondary">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Airport data ──────────────────────────────────────────────────────────────
+const AIRPORT_GROUPS = [
+  { value: 'MY', label: '🇲🇾 Malaysia' },
+  { value: 'TW', label: '🇹🇼 Taiwan' },
+  { value: 'JP', label: '🇯🇵 Japan' },
+  { value: 'SG', label: '🇸🇬 Singapore' },
+  { value: 'TH', label: '🇹🇭 Thailand' },
+  { value: 'KR', label: '🇰🇷 South Korea' },
+  { value: 'HK', label: '🇭🇰 Hong Kong' },
+  { value: 'CN', label: '🇨🇳 China' },
+  { value: 'VN', label: '🇻🇳 Vietnam' },
+  { value: 'ID', label: '🇮🇩 Indonesia' },
+  { value: 'PH', label: '🇵🇭 Philippines' },
+  { value: 'IN', label: '🇮🇳 India' },
+  { value: 'AE', label: '🇦🇪 UAE' },
+  { value: 'QA', label: '🇶🇦 Qatar' },
+  { value: 'GB', label: '🇬🇧 United Kingdom' },
+  { value: 'FR', label: '🇫🇷 France' },
+  { value: 'DE', label: '🇩🇪 Germany' },
+  { value: 'NL', label: '🇳🇱 Netherlands' },
+  { value: 'TR', label: '🇹🇷 Turkey' },
+  { value: 'AU', label: '🇦🇺 Australia' },
+  { value: 'NZ', label: '🇳🇿 New Zealand' },
+  { value: 'US', label: '🇺🇸 United States' },
+  { value: 'CA', label: '🇨🇦 Canada' },
+];
+
+const AIRPORTS = [
+  // Malaysia
+  { value:'KUL', city:'Kuala Lumpur', name:'International (KLIA)', country:'MY' },
+  { value:'SZB', city:'Kuala Lumpur', name:'Subang / Sultan Abdul Aziz Shah', country:'MY' },
+  { value:'PEN', city:'Penang',        name:'International',         country:'MY' },
+  { value:'BKI', city:'Kota Kinabalu', name:'International',         country:'MY' },
+  { value:'KCH', city:'Kuching',       name:'International',         country:'MY' },
+  { value:'JHB', city:'Johor Bahru',   name:'Senai International',   country:'MY' },
+  { value:'LGK', city:'Langkawi',      name:'International',         country:'MY' },
+  { value:'MYY', city:'Miri',          name:'Airport',               country:'MY' },
+  { value:'SDK', city:'Sandakan',      name:'Airport',               country:'MY' },
+  // Taiwan
+  { value:'TPE', city:'Taipei',    name:'Taoyuan International', country:'TW' },
+  { value:'TSA', city:'Taipei',    name:'Songshan',              country:'TW' },
+  { value:'KHH', city:'Kaohsiung', name:'International',         country:'TW' },
+  { value:'RMQ', city:'Taichung',  name:'International',         country:'TW' },
+  { value:'TNN', city:'Tainan',    name:'International',         country:'TW' },
+  { value:'HUN', city:'Hualien',   name:'Airport',               country:'TW' },
+  // Japan
+  { value:'NRT', city:'Tokyo',   name:'Narita International',    country:'JP' },
+  { value:'HND', city:'Tokyo',   name:'Haneda International',    country:'JP' },
+  { value:'KIX', city:'Osaka',   name:'Kansai International',    country:'JP' },
+  { value:'ITM', city:'Osaka',   name:'Itami',                   country:'JP' },
+  { value:'CTS', city:'Sapporo', name:'New Chitose',             country:'JP' },
+  { value:'FUK', city:'Fukuoka', name:'International',           country:'JP' },
+  { value:'NGO', city:'Nagoya',  name:'Chubu Centrair',          country:'JP' },
+  { value:'OKA', city:'Okinawa', name:'Naha',                    country:'JP' },
+  { value:'HIJ', city:'Hiroshima', name:'Airport',               country:'JP' },
+  { value:'KMJ', city:'Kumamoto', name:'Airport',                country:'JP' },
+  // Singapore
+  { value:'SIN', city:'Singapore', name:'Changi International', country:'SG' },
+  // Thailand
+  { value:'BKK', city:'Bangkok',    name:'Suvarnabhumi',         country:'TH' },
+  { value:'DMK', city:'Bangkok',    name:'Don Mueang',           country:'TH' },
+  { value:'HKT', city:'Phuket',     name:'International',        country:'TH' },
+  { value:'CNX', city:'Chiang Mai', name:'International',        country:'TH' },
+  { value:'KBV', city:'Krabi',      name:'International',        country:'TH' },
+  { value:'USM', city:'Koh Samui',  name:'Airport',              country:'TH' },
+  // South Korea
+  { value:'ICN', city:'Seoul',  name:'Incheon International',   country:'KR' },
+  { value:'GMP', city:'Seoul',  name:'Gimpo International',     country:'KR' },
+  { value:'PUS', city:'Busan',  name:'Gimhae International',    country:'KR' },
+  { value:'CJU', city:'Jeju',   name:'International',           country:'KR' },
+  // Hong Kong
+  { value:'HKG', city:'Hong Kong', name:'International', country:'HK' },
+  // China
+  { value:'PEK', city:'Beijing',   name:'Capital International',  country:'CN' },
+  { value:'PKX', city:'Beijing',   name:'Daxing International',   country:'CN' },
+  { value:'PVG', city:'Shanghai',  name:'Pudong International',   country:'CN' },
+  { value:'SHA', city:'Shanghai',  name:'Hongqiao International', country:'CN' },
+  { value:'CAN', city:'Guangzhou', name:'Baiyun International',   country:'CN' },
+  { value:'SZX', city:'Shenzhen',  name:"Bao'an International",   country:'CN' },
+  { value:'CTU', city:'Chengdu',   name:'Tianfu International',   country:'CN' },
+  { value:'XIY', city:"Xi'an",     name:'Xianyang International', country:'CN' },
+  { value:'CKG', city:'Chongqing', name:'Jiangbei International', country:'CN' },
+  { value:'XMN', city:'Xiamen',    name:'Gaoqi International',    country:'CN' },
+  // Vietnam
+  { value:'HAN', city:'Hanoi',          name:'Noi Bai International',       country:'VN' },
+  { value:'SGN', city:'Ho Chi Minh City', name:'Tan Son Nhat International', country:'VN' },
+  { value:'DAD', city:'Da Nang',        name:'International',               country:'VN' },
+  { value:'CXR', city:'Nha Trang',      name:'Cam Ranh International',      country:'VN' },
+  // Indonesia
+  { value:'CGK', city:'Jakarta',  name:'Soekarno-Hatta International', country:'ID' },
+  { value:'DPS', city:'Bali',     name:'Ngurah Rai International',     country:'ID' },
+  { value:'SUB', city:'Surabaya', name:'Juanda International',         country:'ID' },
+  { value:'MES', city:'Medan',    name:'Kualanamu International',      country:'ID' },
+  // Philippines
+  { value:'MNL', city:'Manila', name:'Ninoy Aquino International', country:'PH' },
+  { value:'CEB', city:'Cebu',   name:'Mactan-Cebu International',  country:'PH' },
+  { value:'DVO', city:'Davao',  name:'Francisco Bangoy International', country:'PH' },
+  // India
+  { value:'DEL', city:'Delhi',     name:'Indira Gandhi International', country:'IN' },
+  { value:'BOM', city:'Mumbai',    name:'Chhatrapati Shivaji Maharaj', country:'IN' },
+  { value:'BLR', city:'Bangalore', name:'Kempegowda International',   country:'IN' },
+  { value:'MAA', city:'Chennai',   name:'International',              country:'IN' },
+  { value:'HYD', city:'Hyderabad', name:'Rajiv Gandhi International', country:'IN' },
+  // UAE
+  { value:'DXB', city:'Dubai',     name:'International',    country:'AE' },
+  { value:'AUH', city:'Abu Dhabi', name:'International',    country:'AE' },
+  { value:'SHJ', city:'Sharjah',   name:'International',    country:'AE' },
+  // Qatar
+  { value:'DOH', city:'Doha', name:'Hamad International', country:'QA' },
+  // UK
+  { value:'LHR', city:'London', name:'Heathrow',          country:'GB' },
+  { value:'LGW', city:'London', name:'Gatwick',           country:'GB' },
+  { value:'STN', city:'London', name:'Stansted',          country:'GB' },
+  { value:'MAN', city:'Manchester', name:'International', country:'GB' },
+  { value:'EDI', city:'Edinburgh',  name:'Airport',       country:'GB' },
+  // France
+  { value:'CDG', city:'Paris', name:'Charles de Gaulle',  country:'FR' },
+  { value:'ORY', city:'Paris', name:'Orly',               country:'FR' },
+  // Germany
+  { value:'FRA', city:'Frankfurt', name:'International',  country:'DE' },
+  { value:'MUC', city:'Munich',    name:'International',  country:'DE' },
+  { value:'BER', city:'Berlin',    name:'Brandenburg',    country:'DE' },
+  // Netherlands
+  { value:'AMS', city:'Amsterdam', name:'Schiphol', country:'NL' },
+  // Turkey
+  { value:'IST', city:'Istanbul', name:'Airport',        country:'TR' },
+  { value:'SAW', city:'Istanbul', name:'Sabiha Gökçen',  country:'TR' },
+  // Australia
+  { value:'SYD', city:'Sydney',    name:'Kingsford Smith', country:'AU' },
+  { value:'MEL', city:'Melbourne', name:'Tullamarine',     country:'AU' },
+  { value:'BNE', city:'Brisbane',  name:'International',   country:'AU' },
+  { value:'PER', city:'Perth',     name:'International',   country:'AU' },
+  // New Zealand
+  { value:'AKL', city:'Auckland',      name:'International', country:'NZ' },
+  { value:'CHC', city:'Christchurch',  name:'International', country:'NZ' },
+  // USA
+  { value:'JFK', city:'New York',   name:'John F. Kennedy',      country:'US' },
+  { value:'LGA', city:'New York',   name:'LaGuardia',            country:'US' },
+  { value:'EWR', city:'Newark',     name:'Liberty International', country:'US' },
+  { value:'LAX', city:'Los Angeles', name:'International',       country:'US' },
+  { value:'SFO', city:'San Francisco', name:'International',     country:'US' },
+  { value:'ORD', city:'Chicago',    name:"O'Hare International", country:'US' },
+  { value:'MIA', city:'Miami',      name:'International',        country:'US' },
+  { value:'SEA', city:'Seattle',    name:'Tacoma International', country:'US' },
+  { value:'DFW', city:'Dallas',     name:'Fort Worth International', country:'US' },
+  { value:'ATL', city:'Atlanta',    name:'Hartsfield-Jackson',   country:'US' },
+  { value:'BOS', city:'Boston',     name:'Logan International',  country:'US' },
+  // Canada
+  { value:'YYZ', city:'Toronto',   name:'Pearson International', country:'CA' },
+  { value:'YVR', city:'Vancouver', name:'International',         country:'CA' },
+  { value:'YUL', city:'Montreal',  name:'Trudeau International', country:'CA' },
+];
+
+// ── Tom Select initializer ────────────────────────────────────────────────────
+function initAirportSelect(selectId, hiddenId) {
+  const hiddenEl = document.getElementById(hiddenId);
+  const existing = (hiddenEl.value || '').split(',').map(s => s.trim()).filter(Boolean);
+
+  new TomSelect('#' + selectId, {
+    plugins: ['remove_button'],
+    options: AIRPORTS,
+    optgroups: AIRPORT_GROUPS,
+    optgroupField: 'country',
+    labelField: 'value',
+    valueField: 'value',
+    searchField: ['value', 'city', 'name'],
+    create: true,
+    createFilter: function(input) {
+      var upper = input.toUpperCase();
+      // Allow custom code only if it's not already in the airport list
+      return /^[A-Za-z]{2,4}$/.test(input) && !AIRPORTS.find(function(a) { return a.value === upper; });
+    },
+    placeholder: '搜尋機場代碼或城市...',
+    items: existing,
+    render: {
+      option: function(data, escape) {
+        return '<div class="d-flex gap-2 py-1">'
+          + '<span class="fw-bold text-primary" style="min-width:3em">' + escape(data.value) + '</span>'
+          + '<span class="text-dark">' + escape(data.city) + '</span>'
+          + '<span class="text-muted small">' + escape(data.name) + '</span>'
+          + '</div>';
+      },
+      item: function(data, escape) {
+        return '<div>' + escape(data.value) + '</div>';
+      },
+      optgroup_header: function(data, escape) {
+        return '<div class="ts-optgroup-header fw-semibold small text-muted px-2 py-1">' + escape(data.label) + '</div>';
+      },
+    },
+    onItemAdd: function() {
+      this.setTextboxValue('');
+      this.refreshOptions(false);
+    },
+    onChange: function(values) {
+      hiddenEl.value = Array.isArray(values) ? values.join(', ') : values;
+    }
+  });
+}
+
+initAirportSelect('origins_ts', 'origins');
+initAirportSelect('destinations_ts', 'destinations');
+
+// ── Trip type toggle ──────────────────────────────────────────────────────────
+(function () {
+  var sel = document.getElementById('trip_type');
+  var block = document.getElementById('return-dates');
+  function update() { block.style.display = sel.value === 'round_trip' ? '' : 'none'; }
+  sel.addEventListener('change', update);
+  update();
+})();
+
+// ── Date range constraints ────────────────────────────────────────────────────
+(function () {
+  var depFrom = document.getElementById('departure_date_from');
+  var depTo   = document.getElementById('departure_date_to');
+  var retFrom = document.getElementById('return_date_from');
+  var retTo   = document.getElementById('return_date_to');
+
+  function updateConstraints() {
+    var df = depFrom.value;
+    var dt = depTo.value;
+    var rf = retFrom ? retFrom.value : '';
+
+    // departure_to >= departure_from
+    if (df) depTo.min = df;
+
+    // If departure_to was set before departure_from and is now invalid, clear it
+    if (dt && df && dt < df) depTo.value = '';
+
+    // return_from >= departure_to >= departure_from
+    if (retFrom) {
+      var minForRetFrom = dt || df || '';
+      if (minForRetFrom) retFrom.min = minForRetFrom;
+      if (rf && minForRetFrom && rf < minForRetFrom) retFrom.value = '';
+    }
+
+    // return_to >= return_from
+    if (retTo) {
+      var minForRetTo = rf || df || '';
+      if (minForRetTo) retTo.min = minForRetTo;
+      if (retTo.value && minForRetTo && retTo.value < minForRetTo) retTo.value = '';
+    }
+  }
+
+  depFrom.addEventListener('change', updateConstraints);
+  depTo.addEventListener('change', updateConstraints);
+  if (retFrom) retFrom.addEventListener('change', updateConstraints);
+
+  // Run once on load to set initial constraints from existing values
+  updateConstraints();
+})();
+</script>
+{% endblock %}

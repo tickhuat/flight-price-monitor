@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Watches — Flight Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h3 mb-0">Flight Watches</h1>
+  <a href="{{ url_for('watches.create') }}" class="btn btn-primary">+ New Watch</a>
+</div>
+
+{% if watches %}
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Name</th>
+          <th>Route</th>
+          <th>Departure</th>
+          <th>Max Price</th>
+          <th>Status</th>
+          <th>Last Search</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for watch in watches %}
+        {% set run = latest_runs[watch.id] %}
+        <tr>
+          <td class="fw-semibold">{{ watch.name }}</td>
+          <td class="text-muted small">
+            {{ watch.get_origins()|join(', ') }} → {{ watch.get_destinations()|join(', ') }}
+          </td>
+          <td class="text-muted small">
+            {{ watch.departure_date_from }} – {{ watch.departure_date_to }}
+          </td>
+          <td>{{ watch.currency }} {{ "{:,.0f}".format(watch.max_price) }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('watches.toggle', watch_id=watch.id) }}" class="d-inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm {% if watch.enabled %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                {{ 'Enabled' if watch.enabled else 'Disabled' }}
+              </button>
+            </form>
+          </td>
+          <td class="text-muted small">
+            {% if run %}
+              {% if run.status == 'completed' %}
+                <span class="badge badge-completed">OK</span>
+              {% elif run.status == 'failed' %}
+                <span class="badge badge-failed">Failed</span>
+              {% else %}
+                <span class="badge badge-running">{{ run.status }}</span>
+              {% endif %}
+              {{ run.started_at.strftime('%m-%d %H:%M') if run.started_at else '' }}
+            {% else %}
+              <span class="text-muted">Never</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="btn-group btn-group-sm">
+              <a href="{{ url_for('watches.edit', watch_id=watch.id) }}" class="btn btn-outline-secondary">Edit</a>
+              <form method="POST" action="{{ url_for('watches.run_search', watch_id=watch.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-outline-primary search-btn" title="Run search now">Search</button>
+              </form>
+              <button type="button" class="btn btn-outline-danger"
+                      data-bs-toggle="modal" data-bs-target="#deleteModal{{ watch.id }}">Delete</button>
+            </div>
+
+            <!-- Delete confirmation modal -->
+            <div class="modal fade" id="deleteModal{{ watch.id }}" tabindex="-1">
+              <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title">Delete Watch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    Delete <strong>{{ watch.name }}</strong> and all its search history?
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('watches.delete', watch_id=watch.id) }}">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center py-5">
+    <h5 class="text-muted">No watches yet</h5>
+    <p class="text-muted">Create a watch to start monitoring flight prices.</p>
+    <a href="{{ url_for('watches.create') }}" class="btn btn-primary">Create First Watch</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

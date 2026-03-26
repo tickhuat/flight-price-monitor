@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Search Results — Flight Monitor{% endblock %}
+
+{% macro fmt_duration(mins) %}
+  {% if mins %}{{ mins // 60 }}h {{ mins % 60 }}m{% else %}—{% endif %}
+{% endmacro %}
+
+{% macro offer_row(offer, highlight) %}
+<tr class="{{ 'deal-row' if highlight else '' }}">
+  <td>{{ offer.airline or '—' }}</td>
+  <td>{{ offer.origin }} → {{ offer.destination }}</td>
+  <td>{{ offer.departure_date or '—' }}</td>
+  <td>{{ offer.departure_time or '—' }} – {{ offer.arrival_time or '—' }}</td>
+  {% if run.watch and run.watch.trip_type == 'round_trip' %}
+  <td>{{ offer.return_date or '—' }}</td>
+  <td>{{ offer.return_departure_time or '—' }} – {{ offer.return_arrival_time or '—' }}</td>
+  {% endif %}
+  <td>{{ fmt_duration(offer.duration_outbound_minutes) }}</td>
+  <td>{{ offer.stopovers }}</td>
+  <td class="text-capitalize">{{ offer.cabin_class or '—' }}</td>
+  <td class="fw-semibold {% if highlight %}text-success{% endif %}">
+    {{ offer.currency_display or offer.currency_original }}
+    {{ "{:,.0f}".format(offer.price_display or offer.price_original) }}
+  </td>
+  <td>
+    {% if offer.booking_link %}
+      <a href="{{ offer.booking_link }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success">Book ↗</a>
+    {% else %}—{% endif %}
+  </td>
+</tr>
+{% endmacro %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-4 gap-3">
+  <a href="{{ url_for('searches.index') }}" class="btn btn-outline-secondary btn-sm">← Back</a>
+  <h1 class="h3 mb-0">Search Results: {{ run.watch.name if run.watch else 'Unknown Watch' }}</h1>
+</div>
+
+<!-- Summary card -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 text-center">
+      <div class="col-6 col-md-2">
+        <div class="text-muted small">Status</div>
+        <div>
+          {% if run.status == 'completed' %}
+            <span class="badge badge-completed fs-6">completed</span>
+          {% elif run.status == 'failed' %}
+            <span class="badge badge-failed fs-6">failed</span>
+          {% else %}
+            <span class="badge badge-running fs-6">{{ run.status }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="text-muted small">Triggered By</div>
+        <div>
+          {% if run.triggered_by == 'manual' %}
+            <span class="badge badge-manual">manual</span>
+          {% else %}
+            <span class="badge badge-schedule">schedule</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Started</div>
+        <div class="small">{{ run.started_at.strftime('%Y-%m-%d %H:%M:%S') if run.started_at else '—' }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Duration</div>
+        <div class="small">
+          {% if run.started_at and run.completed_at %}
+            {% set secs = (run.completed_at - run.started_at).seconds %}
+            {{ secs // 60 }}m {{ secs % 60 }}s
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="col-6 col-md-1">
+        <div class="text-muted small">Offers</div>
+        <div class="fw-bold">{{ run.offers_found or 0 }}</div>
+      </div>
+      <div class="col-6 col-md-1">
+        <div class="text-muted small">Deals</div>
+        <div class="fw-bold text-success">{{ run.offers_matched or 0 }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Errors -->
+{% set errors = run.get_errors() %}
+{% if errors %}
+<div class="accordion mb-4" id="errorsAccordion">
+  <div class="accordion-item border-warning">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-warning-subtle" type="button"
+              data-bs-toggle="collapse" data-bs-target="#errorsBody">
+        ⚠ {{ errors|length }} error(s) during search
+      </button>
+    </h2>
+    <div id="errorsBody" class="accordion-collapse collapse">
+      <div class="accordion-body">
+        <ul class="mb-0 small">
+          {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% set is_round_trip = run.watch and run.watch.trip_type == 'round_trip' %}
+
+<!-- Deals table -->
+{% if deals %}
+<div class="card mb-4 border-success">
+  <div class="card-header bg-success text-white fw-semibold">
+    ✓ Deals Under Threshold ({{ deals|length }})
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Airline</th>
+          <th>Route</th>
+          <th>Depart Date</th>
+          <th>Depart Time</th>
+          {% if is_round_trip %}<th>Return Date</th><th>Return Time</th>{% endif %}
+          <th>Duration</th>
+          <th>Stops</th>
+          <th>Cabin</th>
+          <th>Price</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for offer in deals %}{{ offer_row(offer, true) }}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- All other offers -->
+{% if others %}
+<div class="card">
+  <div class="card-header fw-semibold">All Offers ({{ others|length }})</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Airline</th>
+          <th>Route</th>
+          <th>Depart Date</th>
+          <th>Depart Time</th>
+          {% if is_round_trip %}<th>Return Date</th><th>Return Time</th>{% endif %}
+          <th>Duration</th>
+          <th>Stops</th>
+          <th>Cabin</th>
+          <th>Price</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for offer in others %}{{ offer_row(offer, false) }}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% if not deals and not others %}
+<div class="card">
+  <div class="card-body text-center py-5 text-muted">
+    No flight offers were found for this search.
+  </div>
+</div>
+{% endif %}
+{% endblock %}

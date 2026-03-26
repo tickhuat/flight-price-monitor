@@ -1,0 +1,53 @@
+/* Stat cards */
+.stat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Deal rows */
+.deal-row {
+  background-color: #d1e7dd !important;
+}
+
+/* Table hover */
+.table-hover tbody tr:hover {
+  background-color: rgba(0,0,0,0.03);
+}
+
+/* Flash messages auto-dismiss */
+.flash-msg {
+  animation: fadeInDown 0.3s ease;
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Status badges */
+.badge-completed { background-color: #198754; }
+.badge-failed    { background-color: #dc3545; }
+.badge-running   { background-color: #ffc107; color: #000; }
+.badge-pending   { background-color: #6c757d; }
+.badge-manual    { background-color: #0d6efd; }
+.badge-schedule  { background-color: #6f42c1; }
+
+/* Navbar brand */
+.navbar-brand { letter-spacing: 0.02em; }
+
+/* Tom Select airport dropdown */
+.ts-wrapper { width: 100%; }
+.ts-dropdown { font-size: 0.9rem; }
+.ts-dropdown .ts-optgroup-header { background: #f8f9fa; border-bottom: 1px solid #dee2e6; }
+.ts-control { min-height: 38px; }
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .table-responsive-wrap { overflow-x: auto; }
+}
